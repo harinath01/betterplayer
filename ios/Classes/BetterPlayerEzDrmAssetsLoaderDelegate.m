@@ -34,12 +34,16 @@ NSString * DEFAULT_LICENSE_SERVER_URL = @"https://fps.ezdrm.com/api/licenses/";
     } else {
         finalLicenseURL = [[NSURL alloc] initWithString: DEFAULT_LICENSE_SERVER_URL];
     }
-    NSURL * ksmURL = [[NSURL alloc] initWithString: [NSString stringWithFormat:@"%@%@%@",finalLicenseURL,assetId,customParams]];
+    // NSURL * ksmURL = [[NSURL alloc] initWithString: [NSString stringWithFormat:@"%@%@%@",finalLicenseURL,assetId,customParams]];
     
-    NSMutableURLRequest * request = [[NSMutableURLRequest alloc] initWithURL:ksmURL];
+    NSMutableURLRequest * request = [[NSMutableURLRequest alloc] initWithURL:finalLicenseURL];
+    NSString *base64SPCString = [requestBytes base64EncodedStringWithOptions:0];
+    NSDictionary *body = @{@"spc": base64SPCString, @"assetId": assetId};
+    NSData *bodyInBytes = [NSJSONSerialization dataWithJSONObject:body options:0 error:nil];
+
     [request setHTTPMethod:@"POST"];
-    [request setValue:@"application/octet-stream" forHTTPHeaderField:@"Content-type"];
-    [request setHTTPBody:requestBytes];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-type"];
+    [request setHTTPBody:bodyInBytes];
     
     @try {
         decodedData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
@@ -82,7 +86,7 @@ NSString * DEFAULT_LICENSE_SERVER_URL = @"https://fps.ezdrm.com/api/licenses/";
         [loadingRequest finishLoadingWithError:[[NSError alloc] initWithDomain:NSURLErrorDomain code:NSURLErrorClientCertificateRejected userInfo:nil]];
     }
     @try {
-        requestBytes = [loadingRequest streamingContentKeyRequestDataForApp:certificate contentIdentifier: [str dataUsingEncoding:NSUTF8StringEncoding] options:nil error:nil];
+        requestBytes = [loadingRequest streamingContentKeyRequestDataForApp:certificate contentIdentifier: [_assetId dataUsingEncoding:NSUTF8StringEncoding] options:nil error:nil];
     }
     @catch (NSException* excp) {
         [loadingRequest finishLoadingWithError:nil];
